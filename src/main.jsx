@@ -10,9 +10,14 @@ const theme = createTheme({
     fontFamily: 'Stack Sans Text, sans-serif'
   },
   palette: {
+    mode: 'dark',
     background: {
-      default: '#0c0a049e',
+      default: '#1c1d1eff',
     },
+    text: {
+      primary: '#097612ff',
+
+    }
   },
 });
 
