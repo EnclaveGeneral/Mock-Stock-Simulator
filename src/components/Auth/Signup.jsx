@@ -106,7 +106,7 @@ function Signup() {
             setErrorModal({
                 open: true,
                 title: "SignUp Failed",
-                message: errors.message || "An error(s) occured during signup."
+                message: errors.message || "An error(s) occured during signup"
             });
             return;
         }
@@ -118,6 +118,30 @@ function Signup() {
         // Prevent default
         e.preventDefault();
 
+        if (confirmationCode.length === 0) {
+            setErrorModal({
+                open: true,
+                title: "Confirmation Code Not Found",
+                message: "Please enter the confimration code to complete registration"
+            });
+            return; 
+        }
+
+        try { 
+            const { nextStep: confirmSignUpNextStep } = handleConfirm(email, confirmationCode);
+            // If succeed, we will be redirecting to a page where it shows user is 
+            // confirmed to be logged in! Will work on the actual page later
+            if (confirmSignUpNextStep.signUpStep === 'DONE') {
+                navigate("/login");
+            }
+        } catch (errors) {
+            setErrorModal({
+                open: true, 
+                title: "Confirmation Error",
+                message: errors.message || "An error(s) occured during confirmation"
+            })
+            return; 
+        }
 
     }
 
@@ -370,7 +394,7 @@ function Signup() {
                                 textTransform: 'none',
                             }}
                         >
-                            Sign Up
+                            CONFIRM
                         </Button>
                     </Box>
                 </Box>
