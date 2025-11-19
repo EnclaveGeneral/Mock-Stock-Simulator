@@ -4,21 +4,23 @@ import {
     Button,
     TextField,
     Typography,
-    Container, 
-    Avatar, 
+    Container,
+    Avatar,
     CssBaseline,
 } from "@mui/material"
+import { handleSignUp } from "./auth";
 
 function Signup() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [touched, setTouched] = useState({ 
+    const [touched, setTouched] = useState({
         email: false,
-        password: false, 
-        confirmPassword: false 
+        password: false,
+        confirmPassword: false
     });
-    
+    const [registered, setRegistered] = useState("");
+
     // Password validation rules
     const passwordRequirements = {
         minLength: password.length >= 8,
@@ -28,15 +30,17 @@ function Signup() {
         hasSpecial: /[!@#$%^&*]/.test(password),
     };
 
+    useEffect
+
     const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
     const passwordsMatch = password === confirmPassword && confirmPassword !== '';
-    
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         // Mark all fields as touched on submit
         setTouched({ email: true, password: true, confirmPassword: true });
-        
+
         if (!allRequirementsMet) {
             alert("Please meet all password requirements");
             return;
@@ -45,14 +49,17 @@ function Signup() {
             alert("Passwords don't match");
             return;
         }
-        
+
         console.log("Signing Up With: ", {email, password});
-        // Here you would call your AWS Cognito signup
+        try
+        const { isSignUpComplete, userId, nextStep } = handleSignUp(email, password);
     };
 
+
+
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -60,7 +67,7 @@ function Signup() {
         }}>
             <Container maxWidth="sm">
                 <CssBaseline/>
-                <Box 
+                <Box
                     sx={{
                         display: "flex",
                         flexDirection: "column",
@@ -80,12 +87,12 @@ function Signup() {
                             mb: 2
                         }}
                     />
-                    
-                    <Typography 
-                        component="h2" 
-                        variant="h2" 
+
+                    <Typography
+                        component="h2"
+                        variant="h2"
                         sx={{
-                            fontSize: {xs: "28px", md: "36px", xl: "48px"}, 
+                            fontSize: {xs: "28px", md: "36px", xl: "48px"},
                             fontFamily: 'Stack Sans, Arial, sans-serif',
                             color: '#3b82f6',  // Bright blue
                             fontWeight: 700,
@@ -94,9 +101,9 @@ function Signup() {
                     >
                         Sign Up
                     </Typography>
-                    
-                    <Typography 
-                        component="h4" 
+
+                    <Typography
+                        component="h4"
                         variant="h6"
                         sx={{
                             fontSize: {xs: "14px", md: "16px"},
@@ -108,7 +115,7 @@ function Signup() {
                     >
                         Create Your Mock Trader Pro Account Here For Free!
                     </Typography>
-                    
+
                     <Box component="form" onSubmit={handleSubmit} sx={{width: '100%'}}>
                         {/* Email Field */}
                         <TextField
@@ -125,22 +132,22 @@ function Signup() {
                             onChange={(e) => setEmail(e.target.value)}
                             onBlur={() => setTouched({ ...touched, email: true })}
                             sx={{
-                                '& .MuiInputLabel-root': { 
+                                '& .MuiInputLabel-root': {
                                     color: '#94a3b8',
                                     fontFamily: 'Stack Sans Text, sans-serif'
                                 },
                                 '& .MuiOutlinedInput-root': {
                                     color: '#f1f5f9',
                                     fontFamily: 'Stack Sans Text, sans-serif',
-                                    '& fieldset': { 
+                                    '& fieldset': {
                                         borderColor: '#334155',
                                         borderWidth: 2
                                     },
-                                    '&:hover fieldset': { 
-                                        borderColor: '#3b82f6' 
+                                    '&:hover fieldset': {
+                                        borderColor: '#3b82f6'
                                     },
-                                    '&.Mui-focused fieldset': { 
-                                        borderColor: '#3b82f6' 
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#3b82f6'
                                     },
                                 }
                             }}
@@ -161,22 +168,22 @@ function Signup() {
                             onBlur={() => setTouched({ ...touched, password: true })}
                             error={touched.password && password && !allRequirementsMet}
                             sx={{
-                                '& .MuiInputLabel-root': { 
+                                '& .MuiInputLabel-root': {
                                     color: '#94a3b8',
                                     fontFamily: 'Stack Sans, Arial, sans-serif'
                                 },
                                 '& .MuiOutlinedInput-root': {
                                     color: '#f1f5f9',
                                     fontFamily: 'Stack Sans, Arial, sans-serif',
-                                    '& fieldset': { 
+                                    '& fieldset': {
                                         borderColor: '#334155',
                                         borderWidth: 2
                                     },
-                                    '&:hover fieldset': { 
-                                        borderColor: '#3b82f6' 
+                                    '&:hover fieldset': {
+                                        borderColor: '#3b82f6'
                                     },
-                                    '&.Mui-focused fieldset': { 
-                                        borderColor: '#3b82f6' 
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#3b82f6'
                                     },
                                 }
                             }}
@@ -185,9 +192,9 @@ function Signup() {
                         {/* Password Requirements Display */}
                         {touched.password && password && (
                             <Box sx={{ mt: 1.5, mb: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-                                <Typography 
-                                    variant="caption" 
-                                    sx={{ 
+                                <Typography
+                                    variant="caption"
+                                    sx={{
                                         color: passwordRequirements.minLength ? '#22c55e' : '#ef4444',
                                         fontFamily: 'Stack Sans, Arial, sans-serif',
                                         fontSize: '0.8rem',
@@ -197,9 +204,9 @@ function Signup() {
                                 >
                                     {passwordRequirements.minLength ? '✓' : '✗'} At least 8 characters
                                 </Typography>
-                                <Typography 
-                                    variant="caption" 
-                                    sx={{ 
+                                <Typography
+                                    variant="caption"
+                                    sx={{
                                         color: passwordRequirements.hasUpperCase ? '#22c55e' : '#ef4444',
                                         fontFamily: 'Stack Sans, Arial, sans-serif',
                                         fontSize: '0.8rem',
@@ -209,9 +216,9 @@ function Signup() {
                                 >
                                     {passwordRequirements.hasUpperCase ? '✓' : '✗'} One uppercase letter
                                 </Typography>
-                                <Typography 
-                                    variant="caption" 
-                                    sx={{ 
+                                <Typography
+                                    variant="caption"
+                                    sx={{
                                         color: passwordRequirements.hasLowerCase ? '#22c55e' : '#ef4444',
                                         fontFamily: 'Stack Sans, Arial, sans-serif',
                                         fontSize: '0.8rem',
@@ -221,9 +228,9 @@ function Signup() {
                                 >
                                     {passwordRequirements.hasLowerCase ? '✓' : '✗'} One lowercase letter
                                 </Typography>
-                                <Typography 
-                                    variant="caption" 
-                                    sx={{ 
+                                <Typography
+                                    variant="caption"
+                                    sx={{
                                         color: passwordRequirements.hasNumber ? '#22c55e' : '#ef4444',
                                         fontFamily: 'Stack Sans, Arial, sans-serif',
                                         fontSize: '0.8rem',
@@ -233,9 +240,9 @@ function Signup() {
                                 >
                                     {passwordRequirements.hasNumber ? '✓' : '✗'} One number
                                 </Typography>
-                                <Typography 
-                                    variant="caption" 
-                                    sx={{ 
+                                <Typography
+                                    variant="caption"
+                                    sx={{
                                         color: passwordRequirements.hasSpecial ? '#22c55e' : '#ef4444',
                                         fontFamily: 'Stack Sans, Arial, sans-serif',
                                         fontSize: '0.8rem',
@@ -266,22 +273,22 @@ function Signup() {
                                     : ""
                             }
                             sx={{
-                                '& .MuiInputLabel-root': { 
+                                '& .MuiInputLabel-root': {
                                     color: '#94a3b8',
                                     fontFamily: 'Stack Sans, Arial, sans-serif'
                                 },
                                 '& .MuiOutlinedInput-root': {
                                     color: '#f1f5f9',
                                     fontFamily: 'Stack Sans, Arial, sans-serif',
-                                    '& fieldset': { 
+                                    '& fieldset': {
                                         borderColor: '#334155',
                                         borderWidth: 2
                                     },
-                                    '&:hover fieldset': { 
-                                        borderColor: '#3b82f6' 
+                                    '&:hover fieldset': {
+                                        borderColor: '#3b82f6'
                                     },
-                                    '&.Mui-focused fieldset': { 
-                                        borderColor: '#3b82f6' 
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#3b82f6'
                                     },
                                 },
                                 '& .MuiFormHelperText-root': {
@@ -297,7 +304,7 @@ function Signup() {
                             fullWidth
                             variant="contained"
                             sx={{
-                                mt: 3, 
+                                mt: 3,
                                 mb: 2,
                                 py: 1.5,
                                 backgroundColor: '#3b82f6',
