@@ -8,10 +8,9 @@ import {
     Avatar,
     CssBaseline,
 } from "@mui/material"
-import { handleSignUp } from "./auth";
+import { handleSignUp, handleConfirmSignUp } from "./auth";  // ← Added handleConfirmSignUp
 import CloseIcon from '@mui/icons-material/Close';
 import ErrorModal from "../Modals/errorModals";
-import ConfirmModal from "../Modals/confirmModals";
 import { useNavigate } from 'react-router-dom'
 
 function Signup() {
@@ -41,22 +40,22 @@ function Signup() {
         if (!password && !confirmPassword) return errMsgs;
 
         if (password.length < 8) {
-        errMsgs.push("Require At Least 8 Character");
+            errMsgs.push("Require at least 8 characters");
         }
         if (!/[A-Z]/.test(password)) {
-        errMsgs.push("Require At Least 1 Uppercase Letter");
+            errMsgs.push("Require at least 1 uppercase letter");
         }
         if (!/[a-z]/.test(password)) {
-        errMsgs.push("Require At Least 1 Lowercase Letter");
+            errMsgs.push("Require at least 1 lowercase letter");
         }
         if (!/[0-9]/.test(password)) {
-        errMsgs.push("Require At Least 1 Numerical Number");
+            errMsgs.push("Require at least 1 number");
         }
         if (!/[!@#$%^&*]/.test(password)) {
-        errMsgs.push("Require At Least 1 Special Character");
+            errMsgs.push("Require at least 1 special character");
         }
         if (password !== confirmPassword) {
-        errMsgs.push("Password Must Match Confirm Password");
+            errMsgs.push("Passwords must match");
         }
 
         return errMsgs;
@@ -64,7 +63,6 @@ function Signup() {
 
 
     const handleSubmit = async (e) => {
-
         // Prevent page from reloading
         e.preventDefault();
 
@@ -72,21 +70,29 @@ function Signup() {
         setTouched({ email: true, password: true, confirmPassword: true });
 
         if (password.length === 0) {
-            // Call Material UI Error Modal
-            setErrorModal({open: true, title: 'Password Not Found', message: 'Password field cannot be empty'});
+            setErrorModal({
+                open: true, 
+                title: 'Password Not Found', 
+                message: 'Password field cannot be empty'
+            });
             return;
         }
+        
         if (passwordErrors.length > 0) {
-            // Call Material UI Error Modal
-            setErrorModal({open: true, title: "Password Errors", message: "Password does meet one or more requirement(s)"});
+            setErrorModal({
+                open: true, 
+                title: "Password Errors", 
+                message: "Password does not meet one or more requirement(s)"
+            });
             return;
         }
 
-        console.log("Signing Up With: ", {email, password});
+        console.log("Signing up with:", {email, password});
 
         try {
-            const { isSignUpComplete, userId, nextStep } = handleSignUp(email, password);
-            // If succeed, we will call registered and transition to the page asking for user registration code!
+            const { isSignUpComplete, userId, nextStep } = await handleSignUp(email, password);  // ← Added await
+            console.log("Signup response:", { isSignUpComplete, userId, nextStep });
+            
             if (nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
                 setRegistered(true);
             } else if (nextStep.signUpStep === 'DONE') {
@@ -96,25 +102,20 @@ function Signup() {
                     message: "Account already exists, please log in directly"
                 });
                 navigate("/login");
-
             } else {
-                console.log("Auto Sign In");
+                console.log("Auto Sign In flow");
             }
-        } catch (errors) {
-            console.log("Signup Errors: ", errors);
-            // Call Material UI Error Modals
+        } catch (error) {
+            console.error("Signup error:", error);
             setErrorModal({
                 open: true,
-                title: "SignUp Failed",
-                message: errors.message || "An error(s) occured during signup"
+                title: "Signup Failed",
+                message: error.message || "An error occurred during signup"
             });
-            return;
         }
-
     };
 
     const handleConfirm = async (e) => {
-
         // Prevent default
         e.preventDefault();
 
@@ -122,27 +123,27 @@ function Signup() {
             setErrorModal({
                 open: true,
                 title: "Confirmation Code Not Found",
-                message: "Please enter the confimration code to complete registration"
+                message: "Please enter the confirmation code to complete registration"
             });
             return; 
         }
 
         try { 
-            const { nextStep: confirmSignUpNextStep } = handleConfirm(email, confirmationCode);
-            // If succeed, we will be redirecting to a page where it shows user is 
-            // confirmed to be logged in! Will work on the actual page later
-            if (confirmSignUpNextStep.signUpStep === 'DONE') {
+            const { isSignUpComplete, nextStep } = await handleConfirmSignUp(email, confirmationCode);  // ← Fixed function call and added await
+            console.log("Confirmation result:", { isSignUpComplete, nextStep });
+            
+            if (isSignUpComplete) {
+                // Show success message or redirect
                 navigate("/login");
             }
-        } catch (errors) {
+        } catch (error) {
+            console.error("Confirmation error:", error);
             setErrorModal({
                 open: true, 
                 title: "Confirmation Error",
-                message: errors.message || "An error(s) occured during confirmation"
-            })
-            return; 
+                message: error.message || "An error occurred during confirmation"
+            });
         }
-
     }
 
 
@@ -173,7 +174,7 @@ function Signup() {
                             alt="Login Logo"
                             variant="square"
                             sx={{
-                                width: 110,
+                                width: 160,
                                 height: 'auto',
                                 mb: 2
                             }}
@@ -216,6 +217,11 @@ function Signup() {
                                 autoComplete="email"
                                 autoFocus
                                 value={email}
+                                slotProps={{
+                                    htmlInput: {
+                                        style: { color: '#becadbff'}
+                                    }
+                                }}
                                 onChange={(e) => setEmail(e.target.value)}
                                 onBlur={() => setTouched({ ...touched, email: true })}
                             />
@@ -231,6 +237,11 @@ function Signup() {
                                 id="password"
                                 autoComplete="new-password"
                                 value={password}
+                                slotProps={{
+                                    htmlInput: {
+                                        style: { color: '#becadbff'}
+                                    }
+                                }}
                                 onChange={(e) => setPassword(e.target.value)}
                                 onBlur={() => setTouched({ ...touched, password: true })}
                                 error={touched.password && password && passwordErrors.length > 0}
@@ -246,14 +257,14 @@ function Signup() {
                                 type="password"
                                 id="confirmPassword"
                                 value={confirmPassword}
+                                slotProps={{
+                                    htmlInput: {
+                                        style: { color: '#becadbff'}
+                                    }
+                                }}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 onBlur={() => setTouched({ ...touched, confirmPassword: true })}
                                 error={touched.confirmPassword && confirmPassword && passwordErrors.length > 0}
-                                helperText={
-                                    touched.confirmPassword && confirmPassword && passwordErrors.length > 0
-                                        ? "Passwords don't match"
-                                        : ""
-                                }
                             />
 
                             {/* Password Errors Display - Only show failures */}
@@ -315,8 +326,6 @@ function Signup() {
                     title={errorModal.title}
                     message={errorModal.message}
                     onClose={() => setErrorModal({ open: false, title: "", message: "" })}
-                    value={confirmationCode}
-                    onChange
                 />
             </Box>
         );
@@ -367,18 +376,18 @@ function Signup() {
                         We've sent a verification code to {email}. Please enter it below.
                     </Typography>
 
-                    <Box component='form' onSubmit={handleConfirm} sx={{width: 100%}}>
-                        {/* This filed where user will input the email confirmation code */}
+                    <Box component='form' onSubmit={handleConfirm} sx={{width: '100%'}}>
+                        {/* Confirmation code input */}
                         <TextField
                             margin="normal"
                             required
                             fullWidth
                             id="confirmCode"
                             label="Confirmation Code"
-
-                        >
-
-                        </TextField>
+                            value={confirmationCode}
+                            onChange={(e) => setConfirmationCode(e.target.value)}
+                            autoFocus
+                        />
 
                         {/* Submit Button */}
                         <Button
@@ -399,6 +408,14 @@ function Signup() {
                     </Box>
                 </Box>
             </Container>
+            
+            {/* Error Modal */}
+            <ErrorModal
+                open={errorModal.open}
+                title={errorModal.title}
+                message={errorModal.message}
+                onClose={() => setErrorModal({ open: false, title: "", message: "" })}
+            />
         </Box>
     );
 }
