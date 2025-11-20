@@ -7,11 +7,16 @@ import {
     Container,
     Avatar,
     CssBaseline,
+    Input,
 } from "@mui/material"
 import { handleSignUp, handleConfirmSignUp } from "./auth";  // ← Added handleConfirmSignUp
 import CloseIcon from '@mui/icons-material/Close';
 import ErrorModal from "../Modals/errorModals";
 import { useNavigate } from 'react-router-dom'
+import InputField from "../../ui/components/InputField";
+import PrimaryButton from "../../ui/components/PrimaryButton";
+import CardContainer from "../../ui/components/CardContainer";
+import { Link } from "react-router-dom";
 
 function Signup() {
     const [email, setEmail] = useState("");
@@ -71,17 +76,17 @@ function Signup() {
 
         if (password.length === 0) {
             setErrorModal({
-                open: true, 
-                title: 'Password Not Found', 
+                open: true,
+                title: 'Password Not Found',
                 message: 'Password field cannot be empty'
             });
             return;
         }
-        
+
         if (passwordErrors.length > 0) {
             setErrorModal({
-                open: true, 
-                title: "Password Errors", 
+                open: true,
+                title: "Password Errors",
                 message: "Password does not meet one or more requirement(s)"
             });
             return;
@@ -92,7 +97,7 @@ function Signup() {
         try {
             const { isSignUpComplete, userId, nextStep } = await handleSignUp(email, password);  // ← Added await
             console.log("Signup response:", { isSignUpComplete, userId, nextStep });
-            
+
             if (nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
                 setRegistered(true);
             } else if (nextStep.signUpStep === 'DONE') {
@@ -125,13 +130,13 @@ function Signup() {
                 title: "Confirmation Code Not Found",
                 message: "Please enter the confirmation code to complete registration"
             });
-            return; 
+            return;
         }
 
-        try { 
+        try {
             const { isSignUpComplete, nextStep } = await handleConfirmSignUp(email, confirmationCode);  // ← Fixed function call and added await
             console.log("Confirmation result:", { isSignUpComplete, nextStep });
-            
+
             if (isSignUpComplete) {
                 // Show success message or redirect
                 navigate("/login");
@@ -139,7 +144,7 @@ function Signup() {
         } catch (error) {
             console.error("Confirmation error:", error);
             setErrorModal({
-                open: true, 
+                open: true,
                 title: "Confirmation Error",
                 message: error.message || "An error occurred during confirmation"
             });
@@ -159,16 +164,7 @@ function Signup() {
             }}>
                 <Container maxWidth="sm">
                     <CssBaseline />
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            padding: 4,
-                            borderRadius: 3,
-                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
-                        }}
-                    >
+                    <CardContainer>
                         <Avatar
                             src="../../../assets/login_icon.png"
                             alt="Login Logo"
@@ -206,7 +202,7 @@ function Signup() {
 
                         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
                             {/* Email Field */}
-                            <TextField
+                            <InputField
                                 margin="normal"
                                 required
                                 fullWidth
@@ -217,17 +213,12 @@ function Signup() {
                                 autoComplete="email"
                                 autoFocus
                                 value={email}
-                                slotProps={{
-                                    htmlInput: {
-                                        style: { color: '#becadbff'}
-                                    }
-                                }}
                                 onChange={(e) => setEmail(e.target.value)}
                                 onBlur={() => setTouched({ ...touched, email: true })}
                             />
 
                             {/* Password Field */}
-                            <TextField
+                            <InputField
                                 margin="normal"
                                 required
                                 fullWidth
@@ -237,18 +228,13 @@ function Signup() {
                                 id="password"
                                 autoComplete="new-password"
                                 value={password}
-                                slotProps={{
-                                    htmlInput: {
-                                        style: { color: '#becadbff'}
-                                    }
-                                }}
                                 onChange={(e) => setPassword(e.target.value)}
                                 onBlur={() => setTouched({ ...touched, password: true })}
                                 error={touched.password && password && passwordErrors.length > 0}
                             />
 
                             {/* Confirm Password Field */}
-                            <TextField
+                            <InputField
                                 margin="normal"
                                 required
                                 fullWidth
@@ -257,11 +243,6 @@ function Signup() {
                                 type="password"
                                 id="confirmPassword"
                                 value={confirmPassword}
-                                slotProps={{
-                                    htmlInput: {
-                                        style: { color: '#becadbff'}
-                                    }
-                                }}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 onBlur={() => setTouched({ ...touched, confirmPassword: true })}
                                 error={touched.confirmPassword && confirmPassword && passwordErrors.length > 0}
@@ -301,23 +282,27 @@ function Signup() {
                             )}
 
                             {/* Submit Button */}
-                            <Button
+                            <PrimaryButton
                                 type="submit"
                                 fullWidth
-                                variant="contained"
                                 sx={{
                                     mt: 3,
                                     mb: 2,
                                     py: 1.5,
-                                    fontSize: '1rem',
-                                    fontWeight: 600,
-                                    textTransform: 'none',
                                 }}
                             >
                                 Sign Up
-                            </Button>
+                            </PrimaryButton>
+
+                            <Typography
+                                component={Link}
+                                to="/login"
+                                sx={{ cursor: "pointer", textDecoration: "underline", mt: 2, display: "block", fontStyle: "italic", color: "#3b82f6"}}
+                                >
+                                Click Here To Go To SignUp / Register
+                            </Typography>
                         </Box>
-                    </Box>
+                    </CardContainer>
                 </Container>
 
                 {/* Error Modal */}
@@ -378,7 +363,7 @@ function Signup() {
 
                     <Box component='form' onSubmit={handleConfirm} sx={{width: '100%'}}>
                         {/* Confirmation code input */}
-                        <TextField
+                        <InputField
                             margin="normal"
                             required
                             fullWidth
@@ -390,25 +375,21 @@ function Signup() {
                         />
 
                         {/* Submit Button */}
-                        <Button
+                        <PrimaryButton
                             type="submit"
                             fullWidth
-                            variant="contained"
                             sx={{
                                 mt: 3,
                                 mb: 2,
                                 py: 1.5,
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                                textTransform: 'none',
                             }}
                         >
                             CONFIRM
-                        </Button>
+                        </PrimaryButton>
                     </Box>
                 </Box>
             </Container>
-            
+
             {/* Error Modal */}
             <ErrorModal
                 open={errorModal.open}
