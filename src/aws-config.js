@@ -5,7 +5,9 @@ const awsconfig = {
             userPoolId: "us-west-2_kmYlZjgTi",
             userPoolClientId: "4vtm6kim92ii8hffubab0rl9iu",
         }
-    }
+    },
+    // Dynamo DB Integration
+    region: "us-west-2",
 }
 
 export default awsconfig
