@@ -5,6 +5,8 @@ import {
   Container,
   Avatar,
   CssBaseline,
+  InputAdornment,
+  IconButton,
 } from "@mui/material"
 import { handleSignIn } from "./auth"
 import ErrorModal from "../Modals/errorModals"
@@ -13,10 +15,12 @@ import { useNavigate } from "react-router-dom"
 import InputField from "../../ui/components/InputField"
 import PrimaryButton from "../../ui/components/PrimaryButton"
 import { Link } from "react-router-dom";
+import { Visibility, VisibilityOff } from "@mui/icons-material"
 
 function Login() {
   const[email, setEmail] = useState("");
   const[password, setPassword] = useState("");
+  const[showPassword, setShowPassword] = useState(false);
   const[errorModal, setErrorModal] = useState({
     open: false,
     title: "",
@@ -31,25 +35,27 @@ function Login() {
     // Prevent page from reloading
     e.preventDefault();
 
-    if (email.length == 0) {
+    if (email.length === 0) {
       setErrorModal({
         open: true,
         title: "Email Missing",
         message: "Please enter your email"
       })
+      return;
     }
 
-    if (password.length == 0) {
+    if (password.length === 0) {
       setErrorModal({
         open: true,
         title: "Password Missing",
         message: "Please enter your password"
       })
+      return;
     }
 
     // Try Catch Block For Authenticating
     try {
-      const { nextStep} = handleSignIn(email, password);
+      const { nextStep} = await handleSignIn(email, password);
 
       if (nextStep.signInStep === "DONE") {
         navigate("/dashboard");
@@ -59,7 +65,7 @@ function Login() {
     } catch (errors) {
       setErrorModal({
         open: true,
-        title: "Error(s) during SignIn",
+        title: "Login Failed",
         message: errors.message || "An error(s) has occured during Sign In"
       });
     }
@@ -73,7 +79,7 @@ function Login() {
       justifyContent: 'center',
       padding: 2
     }}>
-      <Container maxWidth='sm'>
+      <Container maxWidth='xl'>
         <CssBaseline/>
         <CardContainer>
           <Avatar
@@ -130,11 +136,25 @@ function Login() {
                 fullWidth
                 name="password"
                 label="Password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }
+                }}
               />
 
               <PrimaryButton
@@ -142,7 +162,7 @@ function Login() {
                 fullWidth
                 sx={{
                   mt: 3,
-                  mn: 2,
+                  mb: 2,
                   py: 1.5
                 }}
               >
