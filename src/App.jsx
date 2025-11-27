@@ -7,7 +7,7 @@ import './App.css'
 import Login from './components/Auth/Login'
 import Signup from './components/Auth/Signup'
 import Dashboard from './components/Dashboard/Dashboard'
-import CreateProfile from ''
+import CreateProfile from './components/Auth/CreateProfile' 
 
 Amplify.configure(awsconfig);
 
@@ -19,7 +19,8 @@ function App() {
         <Route path="/" element={<Login />}/>
         <Route path="/signup" element={<Signup />}/>
         <Route path="/dashboard" element={<Dashboard />}/>
-      </Routes>
+        <Route path="/createprofile" element={<CreateProfile />}/>
+      </Routes>69+
     </BrowserRouter>
   )
 }

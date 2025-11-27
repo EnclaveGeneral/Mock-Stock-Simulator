@@ -16,6 +16,8 @@ import InputField from "../../ui/components/InputField"
 import PrimaryButton from "../../ui/components/PrimaryButton"
 import { Link } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material"
+import { getCurrentUser } from "aws-amplify/auth"
+import { getUserProfile } from "../../services/dynamodbService"
 
 function Login() {
   const[email, setEmail] = useState("");
@@ -58,8 +60,21 @@ function Login() {
       const { nextStep} = await handleSignIn(email, password);
 
       if (nextStep.signInStep === "DONE") {
-        navigate("/dashboard");
-        console.log("Signed In Successfully!");
+        console.log("Signed In on Cognito Successfully!");
+
+        // Geet the current user and check if the current user exists in Cognito
+        const user = await getCurrentUser();
+        const profile = await getUserProfile(user.userId);
+
+        if (!profile) {
+          // First time login - redirect to profile setup 
+          console.log('No DynamoDB profile found, redirecting to setup');
+          navigate("/createprofile");
+        } else {
+          // Already has an existing profile, straight to dashboard!
+          console.log('DynamoDB Profile found, redirecting to user dashboard');
+          navigate("/dashboard");
+        }
       }
 
     } catch (errors) {
