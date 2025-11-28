@@ -34,7 +34,7 @@ async function getUserProfile(userId) {
     });
 
     const response = await docClient.send(command);
-    return response;
+    return response.Item;
 }
 
 async function createUserProfile(userId, displayUsername, cashBalance) {

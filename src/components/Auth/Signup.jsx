@@ -299,7 +299,7 @@ function Signup() {
                                 to="/login"
                                 sx={{ cursor: "pointer", textDecoration: "underline", mt: 2, display: "block", fontStyle: "italic", color: "#3b82f6"}}
                                 >
-                                Click Here To Go To SignUp / Register
+                                Click Here To Go To Login
                             </Typography>
                         </Box>
                     </CardContainer>

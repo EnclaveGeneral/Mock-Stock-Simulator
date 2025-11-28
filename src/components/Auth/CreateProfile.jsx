@@ -36,14 +36,14 @@ function CreateProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation correct username 
+    // Validation correct username
     if (username.trim().length === 0) {
       setErrorModal({
-        open: true, 
+        open: true,
         title: "Username Missing",
         message: "Please enter a username for your account"
       });
-      return; 
+      return;
     }
 
     if (cashbalance.trim().length === 0) {
@@ -52,10 +52,10 @@ function CreateProfile() {
         title: "Cashbalance Missing",
         message: "Please enter a cashbalance for your account"
       });
-      return; 
+      return;
     }
 
-    // Now validate the cashabalance for our account 
+    // Now validate the cashabalance for our account
     const err = checkCashError(cashbalance);
     if (err !== "") {
       setErrorModal({
@@ -63,18 +63,18 @@ function CreateProfile() {
         title: "Cashbalance incorrect",
         message: err
       })
-      return; 
+      return;
     }
 
     // Now that everything is set up, proceed with user profile creation
     setLoading(true);
     try {
 
-      // Get current user's ID from Cognito 
+      // Get current user's ID from Cognito
       const user = await getCurrentUser();
 
-      // Create user profile in DynamoDB 
-      await createUserProfile(user.userId, username.trim(), balance);
+      // Create user profile in DynamoDB
+      await createUserProfile(user.userId, username.trim(), cashbalance);
 
       console.log('Profile created successfully!');
 
@@ -84,7 +84,7 @@ function CreateProfile() {
     } catch (error) {
       console.error('Error creating profile:', error);
       setErrorModal({
-        open: true, 
+        open: true,
         title: "Userprofile creation failed",
         message: error.message || 'An error occured while creating user account'
       });
@@ -96,7 +96,7 @@ function CreateProfile() {
     <Box
       sx={{
         minHeight: '100vh',
-        displaya: 'flex',
+        display: 'flex',
         alignItems: "center",
         justifyContent: "center",
         padding: 2
@@ -126,7 +126,7 @@ function CreateProfile() {
               fontFamily: 'Stack Sans, Arial, sans-serif',
             }}
           >
-            Choose your displayed username and starting balance for trading! 
+            Choose your displayed username and starting balance for trading!
           </Typography>
 
           <Box component='form' onSubmit={handleSubmit} sx={{ width : '100%' }}>
@@ -188,7 +188,7 @@ function CreateProfile() {
       </Container>
     </Box>
   )
- 
+
 }
 
 export default CreateProfile;
