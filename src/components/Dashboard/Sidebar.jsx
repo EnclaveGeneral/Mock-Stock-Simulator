@@ -41,6 +41,7 @@ function Sidebar() {
   const handleLogout = async () => {
     try {
       await signOut();
+      navigate('/login');
     } catch (errors) {
       setErrorModal({
         open: true,
