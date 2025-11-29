@@ -18,6 +18,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ErrorModal from '../Modals/errorModals';
+import { useState } from 'react';
 
 const SIDEBAR_WIDTH = 280;
 
@@ -35,13 +36,17 @@ function Sidebar() {
     open: false,
     title: '',
     message: ''
-  })
+  });
 
   const handleLogout = async () => {
     try {
-
+      await signOut();
     } catch (errors) {
-
+      setErrorModal({
+        open: true,
+        title: 'Failed To Logout',
+        message: errors.message || 'An error(s) has occured during logout'
+      })
     }
   }
 
