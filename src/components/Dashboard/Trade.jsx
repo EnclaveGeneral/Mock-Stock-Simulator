@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -11,15 +11,19 @@ import {
   CircularProgress,
   ToggleButton,
   ToggleButtonGroup,
+  avatarClasses,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { getCurrentUser } from 'aws-amplify/auth';
-import { checkHolding, updateCashBalance, updateHolding, recordTransaction } from '../../services/dynamodbService';
+import { useOutletContext } from 'react-router-dom';
+import { updateCashBalance, updateHolding, recordTransaction } from '../../services/dynamodbService';
 import getStockQuote from '../../services/stockService';
 import ErrorModal from '../Modals/errorModals';
 import ConfirmModal from '../Modals/confirmModals';
 
 function Trade() {
+  // List inherited data and properties
+  const { profile, holdings, setHoldings, cashBalance, setCashBalance } = useOutletContext();
+
   // Search & Stock Data
   const [symbol, setSymbol] = useState('');
   const [stockData, setStockData] = useState(null);
@@ -29,9 +33,7 @@ function Trade() {
   const [tradeType, setTradeType] = useState('buy');
   const [quantity, setQuantity] = useState(null);
 
-  // User Data
-  const [cashBalance, setCashBalance] = useState(null);
-  const [userId, setUserId] = useState(null);
+  // User Data directly comes from UseOutletContext.
 
   // Modals
   const [errorModal, setErrorModal] = useState({
@@ -45,26 +47,7 @@ function Trade() {
     message: ''
   });
 
-  // Fetch UserID from Cognito
-  useEffect(() => {
-
-    const fetchUser = async () => {
-      try {
-        const userId = await getCurrentUser();
-        setUserId(userId);
-      } catch (error) {
-        setErrorModal({
-          open: true,
-          title: 'Connection Failure',
-          message: error.message || 'An error(s) has occured while attempting to establish connection with server'
-        });
-      }
-    }
-
-    fetchUser();
-  }, []);
-
-  // TODO: Fetch user's cash balance on component mount
+  // TODO: fetch user's cash balance on component mount
 
   const handleSearch = async () => {
     if (symbol === '') {
@@ -110,7 +93,7 @@ function Trade() {
     const totalCost = quantity * stockData.c;
 
     // First, we need to see if we want to buy or sell
-    if (tradeType === 'buy' && totalCost > cashBalance) {
+    if (tradeType === 'buy' && totalCost > cashBalance ) {
       setErrorModal({
         open: true,
         title: 'Insufficient Funds',
@@ -121,21 +104,24 @@ function Trade() {
 
     // Now we need to handle selling errors
     if (tradeType === 'sell') {
-      const holding = await checkHolding(userId, stockData.symbol);
 
-      if (!holding) {
+
+      const result = holdings.find(item => item.symbol === symbol);
+
+      if (!result) {
         setErrorModal({
           open: true,
           title: 'No Holdings',
           message: `You do not own any share of ${stockData.symbol} `
         })
+        return;
       }
 
-      if (holding.quantity < quantity) {
+      if (result.quantity < quantity) {
         setErrorModal({
           open: true,
           title: 'Insufficient Holdings',
-          message: `You only own ${holding.quantity} shares of ${stockData.symbol}`
+          message: `You only own ${result.quantity} shares of ${stockData.symbol}`
         });
         return;
       }
@@ -158,21 +144,99 @@ function Trade() {
     // 5. Show success or error
 
     // We have buy and sell!
+    const stockPrice = stockData.c;
+    const currentTime = new Date().toISOString();
+    const oldHolding = holdings.find(item => item.symbol === symbol);
 
     // If we are buying
     if (tradeType === 'buy') {
-      const totalCost = symbol * stockData.c;
+      const totalCost = quantity * stockPrice;
       const newCashBalance = cashBalance - totalCost;
-      setCashBalance(newCashBalance);
 
-      try {
-        updateCashBalance(userId, newCashBalance);
+      // Calculate the new average price
+      // Check if we had already bought
+      let newQuantity;
+      let newAverageCost;
 
-        // We need to get an updated quantity and as well as updated average cost. Which doesnt change ofc
-
+      if (!oldHolding) {
+        newQuantity = quantity;
+        newAverageCost = stockPrice;
+      } else {
+        newQuantity = oldHolding.quantity + quantity;
+        const newTotalCost = oldHolding.quantity * oldHolding.averageCost + totalCost;
+        newAverageCost = newTotalCost / (oldHolding.quantity + quantity);
       }
+
+      // Now Update DynamoDB
+      try {
+        await updateCashBalance(profile.userId, cashBalance);
+        await updateHolding(profile.userId, symbol, newQuantity, newAverageCost);
+        await recordTransaction(profile.userId, symbol, 'Buy', stockPrice, quantity);
+      } catch (error) {
+        setErrorModal({
+          open: true,
+          title: "Failed to execute transaction",
+          message: error.message || "An error(s) has occured while attempting to update server"
+        })
+        return;
+      }
+
+      // Now update the local state
+      setCashBalance(newCashBalance);
+      if (!oldHolding) {
+        // We do not own any stock of this type! Add a new entry based on current order
+        let newEntry = {
+          userId: profile.userId,
+          symbol,
+          quantity: quantity,
+          averageCost: stockPrice,
+          updatedAt: currentTime,
+        };
+        setHoldings([...holdings, newEntry]);
+      } else {
+        // We have an existing attribute, calculate the old price, then calculate the new average price as well as quantity
+        setHoldings(holdings.map(h =>
+          h.symbol === symbol
+            ? {...h, quantity: newQuantity, averageCost: newAverageCost, updatedAt: currentTime}
+            : h
+        ));
+      }
+
+
     } else {
       // If we are selling
+      // We know we have enough to sell, so dont worry about that!
+      const totalGains = stockPrice * quantity;
+
+      // If we sell everything, we need to delete the listing
+      const newHoldings = oldHolding.quantity - quantity;
+
+      // Now we call dynamoDB and update our server end information
+      try {
+        await updateCashBalance(cashBalance);
+        await updateHolding(profile.userId, symbol, newHoldings, oldHolding.averageCost);
+        await recordTransaction(profile.userId, symbol, 'Sell', quantity, stockPrice, totalGains);
+      } catch (error) {
+        setErrorModal({
+          open: true,
+          title: 'Failed to execute transaction',
+          message: error.message || "An error(s) has occured while attempting to update server"
+        });
+        return;
+      }
+
+      // After cloud end update, update local states
+      setCashBalance(cashBalance + totalGains); // Mark the gains
+      if (newHoldings === 0) {
+        setHoldings(holdings.filter(h => h.symbol !== symbol));
+      } else {
+        // Update holdings
+        setHoldings(holdings.map(h =>
+          h.symbol === symbol
+          ? {...h, quantity: newHoldings, updatedAt: currentTime}
+          : h
+        ));
+      }
     }
 
   };

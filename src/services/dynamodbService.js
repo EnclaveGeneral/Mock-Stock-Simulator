@@ -77,7 +77,7 @@ async function getUserHoldings(userId) {
     const command = new QueryCommand({
         TableName: TABLES.HOLDINGS,
         KeyConditionExpression: "userId = :userId",
-        ExpressionAttributeNames: {
+        ExpressionAttributeValues: {
             ":userId": userId,
         }
 

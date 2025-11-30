@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -7,48 +7,19 @@ import {
   CardContent,
   Skeleton,
 } from '@mui/material';
-import { getCurrentUser } from 'aws-amplify/auth';
-import { getUserProfile } from '../../services/dynamodbService';
+import { useOutletContext } from 'react-router-dom';
 import ErrorModal from '../Modals/errorModals';
 
 function DashboardHome() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(null);
+  // Get shared state from Dashboard parent
+  const { profile, holdings, cashBalance, loading } = useOutletContext();
+
+  // Local error modal state (keep this)
   const [errorModal, setErrorModal] = useState({
     open: false,
     title: '',
     message: ''
   });
-
-  useEffect(() => {
-    // We need to populate the profile section
-
-    // First we need to grab userId from cognito, then get the userprofile from dynamoDB
-    setLoading(true);
-
-    const fetchUserData = async() => {
-
-      try {
-        const { userId } = await getCurrentUser();
-        const userProfile = await getUserProfile(userId);
-
-        setProfile(userProfile);
-
-      } catch (error) {
-        setErrorModal({
-          open: true,
-          title: "Failed To Fetch User Login Information",
-          message: error.message || "An error(s) has occured while attempting to fetch user information"
-        })
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchUserData();
-
-  }, []);
-
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -56,6 +27,18 @@ function DashboardHome() {
       currency: 'USD'
     }).format(amount);
   };
+
+  // Calculate portfolio value from holdings
+  // For now, using averageCost since we don't have live prices here
+  const calculatePortfolioValue = () => {
+    if (!holdings || holdings.length === 0) return 0;
+    return holdings.reduce((total, holding) => {
+      return total + (holding.quantity * holding.averageCost);
+    }, 0);
+  };
+
+  const portfolioValue = calculatePortfolioValue();
+  const totalAccountValue = cashBalance + portfolioValue;
 
   return (
     <Box>
@@ -79,7 +62,7 @@ function DashboardHome() {
       {/* Stats Cards Grid */}
       <Grid container spacing={3}>
         {/* Cash Balance Card */}
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <Grid size="auto">
           <Card
             sx={{
               backgroundColor: '#252627',
@@ -107,16 +90,14 @@ function DashboardHome() {
                 {loading ? (
                   <Skeleton width={150} />
                 ) : (
-                  formatCurrency(profile?.cashBalance || 0)
+                  formatCurrency(cashBalance || 0)
                 )}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* TODO: Add more cards */}
-
-        {/* - Portfolio Value card */}
+        {/* Portfolio Value Card */}
         <Grid size="auto">
           <Card
             sx={{
@@ -135,7 +116,6 @@ function DashboardHome() {
               >
                 Portfolio Value
               </Typography>
-
               <Typography
                 variant="h4"
                 sx={{
@@ -143,20 +123,18 @@ function DashboardHome() {
                   fontWeight: 700
                 }}
               >
-                { loading ? (
+                {loading ? (
                   <Skeleton width={150} />
                 ) : (
-                  formatCurrency(0)
-                ) }
+                  formatCurrency(portfolioValue)
+                )}
               </Typography>
             </CardContent>
-
           </Card>
-
         </Grid>
 
         {/* Total Account Value Card */}
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <Grid size="auto">
           <Card
             sx={{
               backgroundColor: '#252627',
@@ -184,20 +162,48 @@ function DashboardHome() {
                 {loading ? (
                   <Skeleton width={150} />
                 ) : (
-                  formatCurrency(profile?.cashBalance || 0)  // TODO: Add portfolio value
+                  formatCurrency(totalAccountValue)
                 )}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-
-        {/* - Number of Holdings card */}
-
-
-        {/* - Today's Gain/Loss card (stretch goal) */}
-
-
+        {/* Number of Holdings Card */}
+        <Grid size="auto">
+          <Card
+            sx={{
+              backgroundColor: '#252627',
+              borderRadius: 3,
+              border: '1px solid #333'
+            }}
+          >
+            <CardContent>
+              <Typography
+                sx={{
+                  color: '#94a3b8',
+                  fontSize: '0.875rem',
+                  mb: 1
+                }}
+              >
+                Holdings
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{
+                  color: '#f59e0b',
+                  fontWeight: 700
+                }}
+              >
+                {loading ? (
+                  <Skeleton width={150} />
+                ) : (
+                  `${holdings?.length || 0} stocks`
+                )}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Error Modal */}
@@ -208,8 +214,7 @@ function DashboardHome() {
         onClose={() => setErrorModal({ open: false, title: '', message: '' })}
       />
     </Box>
-  )
+  );
 }
 
 export default DashboardHome;
-
