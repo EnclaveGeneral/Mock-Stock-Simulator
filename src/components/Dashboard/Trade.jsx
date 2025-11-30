@@ -11,7 +11,6 @@ import {
   CircularProgress,
   ToggleButton,
   ToggleButtonGroup,
-  avatarClasses,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useOutletContext } from 'react-router-dom';
@@ -21,7 +20,7 @@ import ErrorModal from '../Modals/errorModals';
 import ConfirmModal from '../Modals/confirmModals';
 
 function Trade() {
-  // List inherited data and properties
+  // Get shared state from Dashboard parent
   const { profile, holdings, setHoldings, cashBalance, setCashBalance } = useOutletContext();
 
   // Search & Stock Data
@@ -31,9 +30,7 @@ function Trade() {
 
   // Trade Form
   const [tradeType, setTradeType] = useState('buy');
-  const [quantity, setQuantity] = useState(null);
-
-  // User Data directly comes from UseOutletContext.
+  const [quantity, setQuantity] = useState('');
 
   // Modals
   const [errorModal, setErrorModal] = useState({
@@ -47,15 +44,13 @@ function Trade() {
     message: ''
   });
 
-  // TODO: fetch user's cash balance on component mount
-
   const handleSearch = async () => {
     if (symbol === '') {
       setErrorModal({
         open: true,
         title: 'Missing input stock ticker',
         message: 'Please enter a stock symbol to search'
-      })
+      });
       return;
     }
 
@@ -64,181 +59,168 @@ function Trade() {
     try {
       const data = await getStockQuote(symbol);
       setStockData(data);
-
     } catch (error) {
       setErrorModal({
         open: true,
         title: 'Failure to fetch stock data',
-        message: error.message || 'An error(s) has occured during stock fetching process'
-      })
+        message: error.message || 'An error(s) has occurred during stock fetching process'
+      });
     } finally {
       setSearchLoading(false);
     }
   };
 
   const handleTrade = async () => {
-    // TODO: Validate and show confirmation modal
-    // 1. Check quantity is valid
-    // 2. Check user has enough cash (for buy) or shares (for sell)
-    // 3. Show confirmation modal with trade details
-    if (!quantity || quantity <= 0) {
+    const qty = parseFloat(quantity) || 0;
+
+    if (qty <= 0) {
       setErrorModal({
         open: true,
         title: "Invalid Quantity",
         message: "Please enter a valid quantity to proceed"
-      })
+      });
       return;
     }
 
-    const totalCost = quantity * stockData.c;
+    const totalCost = qty * stockData.c;
 
-    // First, we need to see if we want to buy or sell
-    if (tradeType === 'buy' && totalCost > cashBalance ) {
+    // Validate buy order
+    if (tradeType === 'buy' && totalCost > cashBalance) {
       setErrorModal({
         open: true,
         title: 'Insufficient Funds',
         message: `You need ${formatCurrency(totalCost)} but only have ${formatCurrency(cashBalance)}`
-      })
+      });
       return;
     }
 
-    // Now we need to handle selling errors
+    // Validate sell order
     if (tradeType === 'sell') {
+      const existingHolding = holdings.find(item => item.symbol === symbol);
 
-
-      const result = holdings.find(item => item.symbol === symbol);
-
-      if (!result) {
+      if (!existingHolding) {
         setErrorModal({
           open: true,
           title: 'No Holdings',
-          message: `You do not own any share of ${stockData.symbol} `
-        })
+          message: `You do not own any shares of ${stockData.symbol}`
+        });
         return;
       }
 
-      if (result.quantity < quantity) {
+      if (existingHolding.quantity < qty) {
         setErrorModal({
           open: true,
           title: 'Insufficient Holdings',
-          message: `You only own ${result.quantity} shares of ${stockData.symbol}`
+          message: `You only own ${existingHolding.quantity} shares of ${stockData.symbol}`
         });
         return;
       }
     }
 
+    // Show confirmation modal
     setConfirmModal({
       open: true,
       title: `Confirm ${tradeType === 'buy' ? 'Purchase' : 'Sale'}`,
-      message: `Are you sure you want to ${tradeType} ${quantity} shares of ${stockData.symbol} for ${formatCurrency(totalCost)}?`
+      message: `Are you sure you want to ${tradeType} ${qty} shares of ${stockData.symbol} for ${formatCurrency(totalCost)}?`
     });
-
   };
 
   const executeTrade = async () => {
-    // TODO: Execute the actual trade
-    // 1. Update cash balance in DynamoDB
-    // 2. Update/create holding in DynamoDB
-    // 3. Record transaction in DynamoDB
-    // 4. Update local state
-    // 5. Show success or error
-
-    // We have buy and sell!
     const stockPrice = stockData.c;
     const currentTime = new Date().toISOString();
+    const qty = parseFloat(quantity);
     const oldHolding = holdings.find(item => item.symbol === symbol);
 
-    // If we are buying
     if (tradeType === 'buy') {
-      const totalCost = quantity * stockPrice;
+      const totalCost = qty * stockPrice;
       const newCashBalance = cashBalance - totalCost;
 
-      // Calculate the new average price
-      // Check if we had already bought
+      // Calculate new quantity and average cost
       let newQuantity;
       let newAverageCost;
 
       if (!oldHolding) {
-        newQuantity = quantity;
+        newQuantity = qty;
         newAverageCost = stockPrice;
       } else {
-        newQuantity = oldHolding.quantity + quantity;
-        const newTotalCost = oldHolding.quantity * oldHolding.averageCost + totalCost;
-        newAverageCost = newTotalCost / (oldHolding.quantity + quantity);
+        newQuantity = oldHolding.quantity + qty;
+        const oldTotalValue = oldHolding.quantity * oldHolding.averageCost;
+        const newTotalValue = oldTotalValue + totalCost;
+        newAverageCost = newTotalValue / newQuantity;
       }
 
-      // Now Update DynamoDB
+      // Update DynamoDB
       try {
-        await updateCashBalance(profile.userId, cashBalance);
+        await updateCashBalance(profile.userId, newCashBalance);
         await updateHolding(profile.userId, symbol, newQuantity, newAverageCost);
-        await recordTransaction(profile.userId, symbol, 'Buy', stockPrice, quantity);
+        await recordTransaction(profile.userId, symbol, 'BUY', qty, stockPrice, totalCost);
       } catch (error) {
         setErrorModal({
           open: true,
           title: "Failed to execute transaction",
-          message: error.message || "An error(s) has occured while attempting to update server"
-        })
-        return;
-      }
-
-      // Now update the local state
-      setCashBalance(newCashBalance);
-      if (!oldHolding) {
-        // We do not own any stock of this type! Add a new entry based on current order
-        let newEntry = {
-          userId: profile.userId,
-          symbol,
-          quantity: quantity,
-          averageCost: stockPrice,
-          updatedAt: currentTime,
-        };
-        setHoldings([...holdings, newEntry]);
-      } else {
-        // We have an existing attribute, calculate the old price, then calculate the new average price as well as quantity
-        setHoldings(holdings.map(h =>
-          h.symbol === symbol
-            ? {...h, quantity: newQuantity, averageCost: newAverageCost, updatedAt: currentTime}
-            : h
-        ));
-      }
-
-
-    } else {
-      // If we are selling
-      // We know we have enough to sell, so dont worry about that!
-      const totalGains = stockPrice * quantity;
-
-      // If we sell everything, we need to delete the listing
-      const newHoldings = oldHolding.quantity - quantity;
-
-      // Now we call dynamoDB and update our server end information
-      try {
-        await updateCashBalance(cashBalance);
-        await updateHolding(profile.userId, symbol, newHoldings, oldHolding.averageCost);
-        await recordTransaction(profile.userId, symbol, 'Sell', quantity, stockPrice, totalGains);
-      } catch (error) {
-        setErrorModal({
-          open: true,
-          title: 'Failed to execute transaction',
-          message: error.message || "An error(s) has occured while attempting to update server"
+          message: error.message || "An error occurred while updating server"
         });
         return;
       }
 
-      // After cloud end update, update local states
-      setCashBalance(cashBalance + totalGains); // Mark the gains
-      if (newHoldings === 0) {
-        setHoldings(holdings.filter(h => h.symbol !== symbol));
+      // Update local state
+      setCashBalance(newCashBalance);
+      if (!oldHolding) {
+        // Add new holding
+        setHoldings([...holdings, {
+          userId: profile.userId,
+          symbol,
+          quantity: qty,
+          averageCost: stockPrice,
+          updatedAt: currentTime,
+        }]);
       } else {
-        // Update holdings
+        // Update existing holding
         setHoldings(holdings.map(h =>
           h.symbol === symbol
-          ? {...h, quantity: newHoldings, updatedAt: currentTime}
-          : h
+            ? { ...h, quantity: newQuantity, averageCost: newAverageCost, updatedAt: currentTime }
+            : h
+        ));
+      }
+
+    } else {
+      // SELL logic
+      const totalGains = stockPrice * qty;
+      const newCashBalance = cashBalance + totalGains;
+      const newHoldingQty = oldHolding.quantity - qty;
+
+      // Update DynamoDB
+      try {
+        await updateCashBalance(profile.userId, newCashBalance);
+        await updateHolding(profile.userId, symbol, newHoldingQty, oldHolding.averageCost);
+        await recordTransaction(profile.userId, symbol, 'SELL', qty, stockPrice, totalGains);
+      } catch (error) {
+        setErrorModal({
+          open: true,
+          title: 'Failed to execute transaction',
+          message: error.message || "An error occurred while updating server"
+        });
+        return;
+      }
+
+      // Update local state
+      setCashBalance(newCashBalance);
+      if (newHoldingQty <= 0) {
+        // Remove holding entirely
+        setHoldings(holdings.filter(h => h.symbol !== symbol));
+      } else {
+        // Update holding quantity
+        setHoldings(holdings.map(h =>
+          h.symbol === symbol
+            ? { ...h, quantity: newHoldingQty, updatedAt: currentTime }
+            : h
         ));
       }
     }
 
+    // Reset form and close modal
+    setConfirmModal({ open: false, title: '', message: '' });
+    setQuantity('');
   };
 
   const formatCurrency = (amount) => {
@@ -307,9 +289,19 @@ function Trade() {
                     {stockData.symbol}
                   </Typography>
                   <Typography variant="h4" sx={{ color: '#3b82f6', fontWeight: 700, mt: 1 }}>
-                    {formatCurrency(stockData.c)} {/* c = current price from Finnhub */}
+                    {formatCurrency(stockData.c)}
                   </Typography>
-                  {/* TODO: Add more stock details like daily change */}
+                  <Box sx={{ mt: 2, display: 'flex', gap: 3 }}>
+                    <Typography sx={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                      High: {formatCurrency(stockData.h)}
+                    </Typography>
+                    <Typography sx={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                      Low: {formatCurrency(stockData.l)}
+                    </Typography>
+                    <Typography sx={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                      Open: {formatCurrency(stockData.o)}
+                    </Typography>
+                  </Box>
                 </Box>
               )}
             </CardContent>
@@ -379,7 +371,7 @@ function Trade() {
               />
 
               {/* Order Summary */}
-              {stockData && quantity > 0 && (
+              {stockData && parseFloat(quantity) > 0 && (
                 <Box sx={{ mb: 2, p: 2, backgroundColor: '#1c1d1e', borderRadius: 2 }}>
                   <Typography sx={{ color: '#94a3b8', mb: 1 }}>
                     Order Summary
@@ -388,7 +380,7 @@ function Trade() {
                     {tradeType === 'buy' ? 'Buy' : 'Sell'} {quantity} shares of {stockData.symbol}
                   </Typography>
                   <Typography sx={{ color: '#3b82f6', fontWeight: 700, mt: 1 }}>
-                    Total: {formatCurrency(stockData.c * quantity)}
+                    Total: {formatCurrency(stockData.c * parseFloat(quantity))}
                   </Typography>
                 </Box>
               )}
@@ -398,7 +390,7 @@ function Trade() {
                 fullWidth
                 variant="contained"
                 onClick={handleTrade}
-                disabled={!stockData || !quantity}
+                disabled={!stockData || !quantity || parseFloat(quantity) <= 0}
                 sx={{
                   py: 1.5,
                   backgroundColor: tradeType === 'buy' ? '#10b981' : '#ef4444',

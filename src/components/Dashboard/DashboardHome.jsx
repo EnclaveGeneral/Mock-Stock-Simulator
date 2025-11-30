@@ -11,10 +11,10 @@ import { useOutletContext } from 'react-router-dom';
 import ErrorModal from '../Modals/errorModals';
 
 function DashboardHome() {
-  // Get shared state from Dashboard parent
-  const { profile, holdings, cashBalance, loading } = useOutletContext();
+  // Get shared state from Dashboard parent (including cached prices!)
+  const { profile, holdings, cashBalance, priceCache, pricesLoading, loading } = useOutletContext();
 
-  // Local error modal state (keep this)
+  // Local error modal state
   const [errorModal, setErrorModal] = useState({
     open: false,
     title: '',
@@ -28,17 +28,23 @@ function DashboardHome() {
     }).format(amount);
   };
 
-  // Calculate portfolio value from holdings
-  // For now, using averageCost since we don't have live prices here
+  // Calculate portfolio value from holdings using cached prices
   const calculatePortfolioValue = () => {
     if (!holdings || holdings.length === 0) return 0;
+
     return holdings.reduce((total, holding) => {
-      return total + (holding.quantity * holding.averageCost);
+      // Use cached live price if available, otherwise fall back to averageCost
+      const cached = priceCache?.[holding.symbol];
+      const price = cached?.price || holding.averageCost;
+      return total + (holding.quantity * price);
     }, 0);
   };
 
   const portfolioValue = calculatePortfolioValue();
   const totalAccountValue = cashBalance + portfolioValue;
+
+  // Show loading state while either user data or prices are loading
+  const isLoading = loading || pricesLoading;
 
   return (
     <Box>
@@ -62,7 +68,7 @@ function DashboardHome() {
       {/* Stats Cards Grid */}
       <Grid container spacing={3}>
         {/* Cash Balance Card */}
-        <Grid size="auto">
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <Card
             sx={{
               backgroundColor: '#252627',
@@ -98,7 +104,7 @@ function DashboardHome() {
         </Grid>
 
         {/* Portfolio Value Card */}
-        <Grid size="auto">
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <Card
             sx={{
               backgroundColor: '#252627',
@@ -123,7 +129,7 @@ function DashboardHome() {
                   fontWeight: 700
                 }}
               >
-                {loading ? (
+                {isLoading ? (
                   <Skeleton width={150} />
                 ) : (
                   formatCurrency(portfolioValue)
@@ -134,7 +140,7 @@ function DashboardHome() {
         </Grid>
 
         {/* Total Account Value Card */}
-        <Grid size="auto">
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <Card
             sx={{
               backgroundColor: '#252627',
@@ -159,7 +165,7 @@ function DashboardHome() {
                   fontWeight: 700
                 }}
               >
-                {loading ? (
+                {isLoading ? (
                   <Skeleton width={150} />
                 ) : (
                   formatCurrency(totalAccountValue)
@@ -170,7 +176,7 @@ function DashboardHome() {
         </Grid>
 
         {/* Number of Holdings Card */}
-        <Grid size="auto">
+        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <Card
             sx={{
               backgroundColor: '#252627',
