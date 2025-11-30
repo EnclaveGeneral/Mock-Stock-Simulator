@@ -7,8 +7,6 @@ import {
     QueryCommand,
     DeleteCommand
 } from "@aws-sdk/lib-dynamodb";
-import { Update } from "@mui/icons-material";
-import { common } from "@mui/material/colors";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 const client = new DynamoDBClient({

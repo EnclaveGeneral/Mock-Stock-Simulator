@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { getCurrentUser } from 'aws-amplify/auth';
-import { getUserProfile } from '../../services/dynamodbService';
+import { checkHolding, updateCashBalance, updateHolding, recordTransaction } from '../../services/dynamodbService';
 import getStockQuote from '../../services/stockService';
 import ErrorModal from '../Modals/errorModals';
 import ConfirmModal from '../Modals/confirmModals';
@@ -27,10 +27,11 @@ function Trade() {
 
   // Trade Form
   const [tradeType, setTradeType] = useState('buy');
-  const [quantity, setQuantity] = useState('');
+  const [quantity, setQuantity] = useState(null);
 
   // User Data
   const [cashBalance, setCashBalance] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   // Modals
   const [errorModal, setErrorModal] = useState({
@@ -44,16 +45,28 @@ function Trade() {
     message: ''
   });
 
+  // Fetch UserID from Cognito
+  useEffect(() => {
+
+    const fetchUser = async () => {
+      try {
+        const userId = await getCurrentUser();
+        setUserId(userId);
+      } catch (error) {
+        setErrorModal({
+          open: true,
+          title: 'Connection Failure',
+          message: error.message || 'An error(s) has occured while attempting to establish connection with server'
+        });
+      }
+    }
+
+    fetchUser();
+  }, []);
+
   // TODO: Fetch user's cash balance on component mount
 
   const handleSearch = async () => {
-    // TODO: Implement stock search
-    // 1. Validate symbol isn't empty
-    // 2. Set searchLoading to true
-    // 3. Call getStockQuote(symbol)
-    // 4. Set stockData with the response
-    // 5. Handle errors
-    // 6. Set searchLoading to false
     if (symbol === '') {
       setErrorModal({
         open: true,
@@ -73,29 +86,67 @@ function Trade() {
       setErrorModal({
         open: true,
         title: 'Failure to fetch stock data',
-        message: 'An error(s) has occured during stock fetching process'
+        message: error.message || 'An error(s) has occured during stock fetching process'
       })
     } finally {
       setSearchLoading(false);
     }
   };
 
-  const handleTrade = () => {
+  const handleTrade = async () => {
     // TODO: Validate and show confirmation modal
     // 1. Check quantity is valid
     // 2. Check user has enough cash (for buy) or shares (for sell)
     // 3. Show confirmation modal with trade details
+    if (!quantity || quantity <= 0) {
+      setErrorModal({
+        open: true,
+        title: "Invalid Quantity",
+        message: "Please enter a valid quantity to proceed"
+      })
+      return;
+    }
+
+    const totalCost = quantity * stockData.c;
 
     // First, we need to see if we want to buy or sell
-    if (tradeType === 'buy') {
-      // If we can execute the trade
-      if (quantity * stockData.c <= cashBalance) {
-        executeTrade();
-      }
-    } else {
-      // We are selling stocks here!
-
+    if (tradeType === 'buy' && totalCost > cashBalance) {
+      setErrorModal({
+        open: true,
+        title: 'Insufficient Funds',
+        message: `You need ${formatCurrency(totalCost)} but only have ${formatCurrency(cashBalance)}`
+      })
+      return;
     }
+
+    // Now we need to handle selling errors
+    if (tradeType === 'sell') {
+      const holding = await checkHolding(userId, stockData.symbol);
+
+      if (!holding) {
+        setErrorModal({
+          open: true,
+          title: 'No Holdings',
+          message: `You do not own any share of ${stockData.symbol} `
+        })
+      }
+
+      if (holding.quantity < quantity) {
+        setErrorModal({
+          open: true,
+          title: 'Insufficient Holdings',
+          message: `You only own ${holding.quantity} shares of ${stockData.symbol}`
+        });
+        return;
+      }
+    }
+
+    setConfirmModal({
+      open: true,
+      title: `Confirm ${tradeType === 'buy' ? 'Purchase' : 'Sale'}`,
+      message: `Are you sure you want to ${tradeType} ${quantity} shares of ${stockData.symbol} for ${formatCurrency(totalCost)}?`
+    });
+
   };
 
   const executeTrade = async () => {
@@ -105,6 +156,25 @@ function Trade() {
     // 3. Record transaction in DynamoDB
     // 4. Update local state
     // 5. Show success or error
+
+    // We have buy and sell!
+
+    // If we are buying
+    if (tradeType === 'buy') {
+      const totalCost = symbol * stockData.c;
+      const newCashBalance = cashBalance - totalCost;
+      setCashBalance(newCashBalance);
+
+      try {
+        updateCashBalance(userId, newCashBalance);
+
+        // We need to get an updated quantity and as well as updated average cost. Which doesnt change ofc
+
+      }
+    } else {
+      // If we are selling
+    }
+
   };
 
   const formatCurrency = (amount) => {
