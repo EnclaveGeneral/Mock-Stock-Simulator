@@ -91,6 +91,7 @@ function Account() {
             icon={PersonIcon}
             label="Display Name"
             value={profile?.displayUsername || '—'}
+            loading={loading}
           />
 
           <Divider sx={{ borderColor: '#333' }} />

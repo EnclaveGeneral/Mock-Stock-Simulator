@@ -102,7 +102,7 @@ function Trade() {
         setErrorModal({
           open: true,
           title: 'No Holdings',
-          message: `You do not own any shares of ${stockData.symbol}`
+          message: `You do not own any shares of ${symbol}`
         });
         return;
       }
@@ -111,7 +111,7 @@ function Trade() {
         setErrorModal({
           open: true,
           title: 'Insufficient Holdings',
-          message: `You only own ${existingHolding.quantity} shares of ${stockData.symbol}`
+          message: `You only own ${existingHolding.quantity} shares of ${symbol}`
         });
         return;
       }
@@ -121,7 +121,7 @@ function Trade() {
     setConfirmModal({
       open: true,
       title: `Confirm ${tradeType === 'buy' ? 'Purchase' : 'Sale'}`,
-      message: `Are you sure you want to ${tradeType} ${qty} shares of ${stockData.symbol} for ${formatCurrency(totalCost)}?`
+      message: `Are you sure you want to ${tradeType} ${qty} shares of ${symbol} for ${formatCurrency(totalCost)}?`
     });
   };
 
@@ -286,7 +286,7 @@ function Trade() {
                 <Box sx={{ mt: 3 }}>
                   <Divider sx={{ borderColor: '#333', mb: 2 }} />
                   <Typography variant="h5" sx={{ color: '#ffffff', fontWeight: 700 }}>
-                    {stockData.symbol}
+                    {symbol}
                   </Typography>
                   <Typography variant="h4" sx={{ color: '#3b82f6', fontWeight: 700, mt: 1 }}>
                     {formatCurrency(stockData.c)}
@@ -377,7 +377,7 @@ function Trade() {
                     Order Summary
                   </Typography>
                   <Typography sx={{ color: '#ffffff' }}>
-                    {tradeType === 'buy' ? 'Buy' : 'Sell'} {quantity} shares of {stockData.symbol}
+                    {tradeType === 'buy' ? 'Buy' : 'Sell'} {quantity} shares of {symbol}
                   </Typography>
                   <Typography sx={{ color: '#3b82f6', fontWeight: 700, mt: 1 }}>
                     Total: {formatCurrency(stockData.c * parseFloat(quantity))}

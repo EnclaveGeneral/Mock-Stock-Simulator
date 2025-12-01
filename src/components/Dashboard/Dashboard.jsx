@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { Sidebar, SIDEBAR_WIDTH } from './Sidebar';
 import { getCurrentUser } from 'aws-amplify/auth';
 import { getUserProfile, getUserHoldings } from '../../services/dynamodbService';
@@ -19,12 +19,22 @@ function Dashboard() {
   const [priceCache, setPriceCache] = useState({});
   const [pricesLoading, setPricesLoading] = useState(true);
 
+  const navigate = useNavigate();
+
   // Fetch user data on mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const { userId } = await getCurrentUser();
         const userProfile = await getUserProfile(userId);
+
+        // Check if profile exists
+        if (!userProfile) {
+          // No profile in DynamoDB - redirect to create profile
+          navigate('/createprofile');
+          return;
+        }
+
         const userHoldings = await getUserHoldings(userId);
 
         setProfile(userProfile);

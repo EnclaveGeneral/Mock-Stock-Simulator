@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
   Box,
   Typography,
@@ -30,6 +30,21 @@ function Login() {
   })
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        await getCurrentUser();
+      // If we are already logged in, redirects to dashboard
+      navigate("/dashboard");
+      } catch {
+        // Expected behavior.
+      }
+    }
+
+    checkAuthStatus();
+
+  }, [navigate])
 
 
   const handleSubmit = async (e) => {
@@ -67,7 +82,7 @@ function Login() {
         const profile = await getUserProfile(user.userId);
 
         if (!profile) {
-          // First time login - redirect to profile setup 
+          // First time login - redirect to profile setup
           console.log('No DynamoDB profile found, redirecting to setup');
           navigate("/createprofile");
         } else {

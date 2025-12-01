@@ -80,11 +80,10 @@ async function getUserHoldings(userId) {
         ExpressionAttributeValues: {
             ":userId": userId,
         }
-
     });
 
     const response = await docClient.send(command);
-    return response || [];
+    return response.Items || [];
 }
 
 async function checkHolding(userId, symbol) {

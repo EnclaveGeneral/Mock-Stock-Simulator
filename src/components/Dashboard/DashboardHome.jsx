@@ -68,12 +68,14 @@ function DashboardHome() {
       {/* Stats Cards Grid */}
       <Grid container spacing={3}>
         {/* Cash Balance Card */}
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+        <Grid size="auto">
           <Card
             sx={{
               backgroundColor: '#252627',
               borderRadius: 3,
-              border: '1px solid #333'
+              border: '1px solid #333',
+              minWidth: 'fit-content',
+              flex: '1 1 auto',
             }}
           >
             <CardContent>
@@ -104,12 +106,14 @@ function DashboardHome() {
         </Grid>
 
         {/* Portfolio Value Card */}
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+        <Grid size="auto">
           <Card
             sx={{
               backgroundColor: '#252627',
               borderRadius: 3,
               border: '1px solid #333',
+              minWidth: 'fit-content',
+              flex: '1 1 auto',
             }}
           >
             <CardContent>
@@ -140,12 +144,14 @@ function DashboardHome() {
         </Grid>
 
         {/* Total Account Value Card */}
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+        <Grid size="auto">
           <Card
             sx={{
               backgroundColor: '#252627',
               borderRadius: 3,
-              border: '1px solid #333'
+              border: '1px solid #333',
+              minWidth: 'fit-content',
+              flex: '1 1 auto',
             }}
           >
             <CardContent>
@@ -176,12 +182,14 @@ function DashboardHome() {
         </Grid>
 
         {/* Number of Holdings Card */}
-        <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+        <Grid size="auto">
           <Card
             sx={{
               backgroundColor: '#252627',
               borderRadius: 3,
-              border: '1px solid #333'
+              border: '1px solid #333',
+              minWidth: 'fit-content',
+              flex: '1 1 auto',
             }}
           >
             <CardContent>

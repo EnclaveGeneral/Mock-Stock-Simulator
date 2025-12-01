@@ -13,7 +13,7 @@ function ErrorModal({ open, title, message, onClose }) {
       slotProps={{
         paper: {
           sx: {
-            backgroundColor: '#e0e0e0',
+            backgroundColor: '#12161bff',
           }
         }
       }}
@@ -36,7 +36,7 @@ function ErrorModal({ open, title, message, onClose }) {
       <DialogContent>
         <Typography
           sx={{
-            color: '#cb1d1d',
+            color: '#ff0000',
             fontFamily: 'Stack Sans Text, sans-serif'
           }}
         >

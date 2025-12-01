@@ -14,7 +14,7 @@ function ConfirmModal({open, title, message, onConfirm, onCancel}) {
       slotProps={{
         paper: {
           sx: {
-            backgroundColor: '#e0e0e0',
+            backgroundColor: '#12161bff',
           }
         }
       }}
@@ -25,7 +25,7 @@ function ConfirmModal({open, title, message, onConfirm, onCancel}) {
           direction="row"
           alignItems="center"
           sx={{
-            color: '#161bfb',
+            color: '#bacbe6ff',
             fontFamily: 'Stack Sans Text, sans-serif'
           }}
         >
@@ -37,7 +37,7 @@ function ConfirmModal({open, title, message, onConfirm, onCancel}) {
       <DialogContent>
         <Typography
           sx={{
-            color: '#161bfb',
+            color: '#bacbe6ff',
             fontFamily: 'Stack Sans Text, sans-serif',
           }}
         >

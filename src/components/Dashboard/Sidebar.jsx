@@ -18,6 +18,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ErrorModal from '../Modals/errorModals';
+import ConfirmModal from '../Modals/confirmModals';
 import { useState } from 'react';
 
 const SIDEBAR_WIDTH = 280;
@@ -37,8 +38,22 @@ function Sidebar() {
     title: '',
     message: ''
   });
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: '',
+    message: '',
+  })
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setConfirmModal({
+      open: true,
+      title: 'Logout Confirmation',
+      message: 'Are you sure you want to Log out?'
+    });
+
+  }
+
+  const confirmLogout = async () => {
     try {
       await signOut();
       navigate('/login');
@@ -47,7 +62,7 @@ function Sidebar() {
         open: true,
         title: 'Failed To Logout',
         message: errors.message || 'An error(s) has occured during logout'
-      })
+      });
     }
   }
 
@@ -150,6 +165,15 @@ function Sidebar() {
         title={errorModal.title}
         message={errorModal.message}
         onClose={() => setErrorModal({open: false, title: '', message: ''})}
+      />
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmLogout}
+        onCancel={() => setConfirmModal({open: false, title: '', message: ''})}
+        onClose={() => setConfirmModal({open: false, title: '', message: ''})}
       />
     </Box>
   );
