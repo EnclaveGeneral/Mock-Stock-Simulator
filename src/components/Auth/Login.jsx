@@ -133,7 +133,7 @@ function Login() {
                 mb: 1
             }}
           >
-            Fuck U Vercel
+            Log In
           </Typography>
 
           <Typography
