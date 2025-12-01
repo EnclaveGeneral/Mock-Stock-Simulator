@@ -12,6 +12,12 @@ Technology Used
   BackEnd: Node.JS, AWS Amplify, AWS Cognito, AWS API Gateway, AWS DynamoDB, AWS Lambda
   API: FinnHub Basic Financial API
 
+Current Application URL:
+  https://mock-stock-simulator.vercel.app/
+
+Presentation URL:
+  https://drive.google.com/file/d/1Q0bDIqOlXHCLoHKptN8tpyCcsGrO0zCX/view?usp=sharing
+
 
 User Guide:
   Visit the site at:
