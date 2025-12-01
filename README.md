@@ -16,7 +16,7 @@ Current Application URL:
   https://mock-stock-simulator.vercel.app/
 
 Presentation URL:
-  https://drive.google.com/file/d/1Q0bDIqOlXHCLoHKptN8tpyCcsGrO0zCX/view?usp=sharing
+  https://youtu.be/YCR37xXpLNY
 
 
 User Guide:
