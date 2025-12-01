@@ -36,10 +36,10 @@ function Login() {
     const checkAuthStatus = async () => {
       try {
         await getCurrentUser();
-      // If we are already logged in, redirects to dashboard
-      navigate("/dashboard");
+        // If we are already logged in, redirects to dashboard
+        navigate("/dashboard");
       } catch {
-        // Expected behavior.
+        // Expected behavior. Stay on this page
       }
     }
 
