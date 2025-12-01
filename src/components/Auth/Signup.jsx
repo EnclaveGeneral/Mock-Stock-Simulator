@@ -17,6 +17,7 @@ import InputField from "../../ui/components/InputField";
 import PrimaryButton from "../../ui/components/PrimaryButton";
 import CardContainer from "../../ui/components/CardContainer";
 import { Link } from "react-router-dom";
+import loginIcon from '../../assets/login_icon.png';
 
 function Signup() {
     const [email, setEmail] = useState("");
@@ -166,7 +167,7 @@ function Signup() {
                     <CssBaseline />
                     <CardContainer>
                         <Avatar
-                            src="../../../assets/login_icon.png"
+                            src={loginIcon}
                             alt="Login Logo"
                             variant="square"
                             sx={{

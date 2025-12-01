@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 import { Visibility, VisibilityOff } from "@mui/icons-material"
 import { getCurrentUser } from "aws-amplify/auth"
 import { getUserProfile } from "../../services/dynamodbService"
+import loginIcon from '../../assets/login_icon.png';
 
 function Login() {
   const[email, setEmail] = useState("");
@@ -113,7 +114,7 @@ function Login() {
         <CssBaseline/>
         <CardContainer>
           <Avatar
-            src="../../../assets/login_icon.png"
+            src={loginIcon}
             alt="Login Logo"
             variant="square"
             sx={{
