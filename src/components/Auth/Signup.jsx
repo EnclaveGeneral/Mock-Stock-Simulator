@@ -17,7 +17,7 @@ import InputField from "../../ui/components/InputField";
 import PrimaryButton from "../../ui/components/PrimaryButton";
 import CardContainer from "../../ui/components/CardContainer";
 import { Link } from "react-router-dom";
-import loginIcon from '../../assets/login_icon.png';
+import loginIcon from '../../../assets/login_icon.png';
 
 function Signup() {
     const [email, setEmail] = useState("");
